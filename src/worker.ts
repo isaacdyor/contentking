@@ -1,8 +1,14 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { createVideo } from "./createVideo";
+import path from "path";
+import { promises as fs } from "fs";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
@@ -18,8 +24,26 @@ export async function handler(event: WorkerEvent) {
   try {
     console.log("Starting processing for job:", jobId);
 
+    // Download all videos from S3
+    const videoFilePaths: string[] = [];
+    for (const key of keys) {
+      const filename = key.split("/").pop()!;
+      const downloadPath = path.join("/tmp", filename);
+      const response = await s3.send(
+        new GetObjectCommand({
+          Bucket: process.env.BUCKET_NAME!,
+          Key: key,
+        })
+      );
+
+      const buffer = await response.Body!.transformToByteArray();
+      await fs.writeFile(downloadPath, buffer);
+      videoFilePaths.push(downloadPath);
+      console.log("Downloaded:", key);
+    }
+
     // Create the concatenated video
-    const video = await createVideo(keys);
+    const video = await createVideo(videoFilePaths);
 
     // Upload concatenated video to S3
     const resultKey = `results/${jobId}.mp4`;

@@ -2,30 +2,9 @@ import path from "path";
 import ffmpeg from "ffmpeg-static";
 import { promises as fs } from "fs";
 import { spawnSync } from "child_process";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
-const s3 = new S3Client();
-
-export async function createVideo(keys: string[]): Promise<Buffer> {
-  console.log("Starting video creation for keys:", keys);
-
-  // Download all videos from S3
-  const videoFiles: string[] = [];
-  for (const key of keys) {
-    const filename = key.split("/").pop()!;
-    const downloadPath = path.join("/tmp", filename);
-    const response = await s3.send(
-      new GetObjectCommand({
-        Bucket: process.env.BUCKET_NAME!,
-        Key: key,
-      })
-    );
-
-    const buffer = await response.Body!.transformToByteArray();
-    await fs.writeFile(downloadPath, buffer);
-    videoFiles.push(downloadPath);
-    console.log("Downloaded:", key);
-  }
+export async function createVideo(videoFilePaths: string[]): Promise<Buffer> {
+  console.log("Starting video creation for files:", videoFilePaths);
 
   // Concatenate videos using ffmpeg concat filter
   // Scale all videos to 1920x1080 and set to 30fps before concatenating
@@ -33,19 +12,19 @@ export async function createVideo(keys: string[]): Promise<Buffer> {
 
   // Build input arguments: -i file1 -i file2 -i file3...
   const inputArgs: string[] = [];
-  for (const file of videoFiles) {
+  for (const file of videoFilePaths) {
     inputArgs.push("-i", file);
   }
 
   // Build filter complex: scale each video to same resolution and fps, then concat
-  const scaleFilters = videoFiles
+  const scaleFilters = videoFilePaths
     .map(
       (_, i) =>
         `[${i}:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v${i}]`
     )
     .join(";");
-  const concatInputs = videoFiles.map((_, i) => `[v${i}]`).join("");
-  const filterComplex = `${scaleFilters};${concatInputs}concat=n=${videoFiles.length}:v=1:a=0[outv]`;
+  const concatInputs = videoFilePaths.map((_, i) => `[v${i}]`).join("");
+  const filterComplex = `${scaleFilters};${concatInputs}concat=n=${videoFilePaths.length}:v=1:a=0[outv]`;
 
   const ffmpegParams = [
     ...inputArgs,
@@ -57,6 +36,10 @@ export async function createVideo(keys: string[]): Promise<Buffer> {
     "libx264",
     "-preset",
     "fast",
+    "-pix_fmt",
+    "yuv420p", // Ensure compatible pixel format for all players
+    "-movflags",
+    "+faststart", // Enable streaming/progressive download
     "-an", // No audio
     outputPath,
   ];
