@@ -10,11 +10,17 @@ export default $config({
     };
   },
   async run() {
+    const bucket = new sst.aws.Bucket("MyBucket");
+
     const func = new sst.aws.Function("MyFunction", {
       url: true,
       memory: "2 GB",
       timeout: "15 minutes",
       handler: "index.handler",
+      link: [bucket],
+      environment: {
+        BUCKET_NAME: bucket.name,
+      },
       copyFiles: [{ from: "clip.mp4" }],
       nodejs: { install: ["ffmpeg-static"] },
     });

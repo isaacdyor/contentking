@@ -14,7 +14,10 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.917.0",
+    "@aws-sdk/s3-request-presigner": "^3.917.0",
     "ffmpeg-static": "^5.2.0",
+    "hono": "^4.10.3",
     "sst": "3.17.21"
   }
 }

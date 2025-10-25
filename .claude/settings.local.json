@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl https://augtwvvkzzyzf5m532dibng27e0liyaz.lambda-url.us-east-1.on.aws/upload)",
+      "Bash(curl:*)",
+      "Bash(bun run:*)",
+      "Bash(sst logs:*)",
+      "Bash(aws lambda list-functions:*)",
+      "Bash(aws lambda update-function-configuration:*)",
+      "Bash(aws logs tail:*)",
+      "Bash(sst:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
