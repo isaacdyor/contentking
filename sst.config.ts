@@ -26,6 +26,10 @@ export default $config({
       memory: "2 GB",
       timeout: "15 minutes",
       handler: "worker.handler",
+      link: [bucket],
+      environment: {
+        BUCKET_NAME: bucket.name,
+      },
       copyFiles: [{ from: "clip.mp4" }],
       nodejs: { install: ["ffmpeg-static"] },
     });
