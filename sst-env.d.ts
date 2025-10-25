@@ -21,7 +21,6 @@ declare module "sst" {
     "WorkerFunction": {
       "name": string
       "type": "sst.aws.Function"
-      "url": string
     }
   }
 }

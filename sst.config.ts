@@ -22,15 +22,14 @@ export default $config({
     });
 
     const workerFunction = new sst.aws.Function("WorkerFunction", {
-      url: true,
       memory: "2 GB",
       timeout: "15 minutes",
       handler: "worker.handler",
-      link: [bucket],
+      link: [bucket, processingJobsTable],
       environment: {
         BUCKET_NAME: bucket.name,
+        TABLE_NAME: processingJobsTable.name,
       },
-      copyFiles: [{ from: "clip.mp4" }],
       nodejs: { install: ["ffmpeg-static"] },
     });
 
@@ -47,7 +46,6 @@ export default $config({
 
     return {
       url: func.url,
-      workerUrl: workerFunction.url,
     };
   },
 });
