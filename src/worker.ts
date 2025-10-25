@@ -9,17 +9,17 @@ const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
 
 interface WorkerEvent {
   jobId: string;
-  fileIds: string[];
+  keys: string[];
 }
 
 export async function handler(event: WorkerEvent) {
-  const { jobId, fileIds } = event;
+  const { jobId, keys } = event;
 
   try {
     console.log("Starting processing for job:", jobId);
 
     // Create the concatenated video
-    const video = await createVideo(fileIds);
+    const video = await createVideo(keys);
 
     // Upload concatenated video to S3
     const resultKey = `results/${jobId}.mp4`;

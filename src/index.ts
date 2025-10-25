@@ -19,29 +19,44 @@ const app = new Hono();
 
 // Schemas
 const uploadSchema = z.object({
-  count: z.number().min(1),
+  filenames: z.array(z.string()),
 });
 
 const processSchema = z.object({
-  fileIds: z.array(z.string()),
+  keys: z.array(z.string()),
 });
+
+// Helper to get content type from extension
+function getContentType(filename: string): string {
+  const ext = filename.toLowerCase().split('.').pop();
+  const contentTypes: Record<string, string> = {
+    'mp4': 'video/mp4',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
+    'webm': 'video/webm',
+  };
+  return contentTypes[ext || ''] || 'video/mp4';
+}
 
 // POST /upload - Generate presigned URLs for multiple files
 app.post("/upload", zValidator("json", uploadSchema), async (c) => {
   const body = c.req.valid("json");
 
   const uploads = await Promise.all(
-    Array.from({ length: body.count }, async () => {
+    body.filenames.map(async (filename) => {
       const fileId = crypto.randomUUID();
+      const ext = filename.split('.').pop() || 'mp4';
       const command = new PutObjectCommand({
-        Key: `uploads/${fileId}.mp4`,
+        Key: `uploads/${fileId}.${ext}`,
         Bucket: process.env.BUCKET_NAME!,
-        ContentType: "video/mp4",
+        ContentType: getContentType(filename),
       });
 
       const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      const key = `uploads/${fileId}.${ext}`;
 
-      return { fileId, uploadUrl };
+      return { key, uploadUrl };
     })
   );
 
@@ -60,7 +75,7 @@ app.post("/process", zValidator("json", processSchema), async (c) => {
       Item: {
         jobId,
         status: "processing",
-        fileIds: body.fileIds,
+        keys: body.keys,
         createdAt: Date.now(),
       },
     })
@@ -71,7 +86,7 @@ app.post("/process", zValidator("json", processSchema), async (c) => {
     new InvokeCommand({
       FunctionName: process.env.WORKER_FUNCTION_NAME!,
       InvocationType: "Event", // Async invocation
-      Payload: JSON.stringify({ jobId, fileIds: body.fileIds }),
+      Payload: JSON.stringify({ jobId, keys: body.keys }),
     })
   );
 

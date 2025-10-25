@@ -10,7 +10,7 @@ const args = process.argv.slice(2);
 if (args.length === 0) {
   console.log("Usage:");
   console.log("  bun cli.ts upload <file1.mp4> <file2.mp4> ...");
-  console.log("  bun cli.ts process <fileId1> <fileId2> ...");
+  console.log("  bun cli.ts process <key1> <key2> ...");
   process.exit(0);
 }
 
@@ -20,34 +20,32 @@ async function uploadFiles(filePaths: string[]) {
   console.log(`Uploading ${filePaths.length} files...`);
 
   // Step 1: Request presigned URLs
+  const filenames = filePaths.map((p) => p.split("/").pop()!);
   const uploadResponse = await fetch(`${API_URL}/upload`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ count: filePaths.length }),
+    body: JSON.stringify({ filenames }),
   });
 
   if (!uploadResponse.ok) {
     throw new Error(`Failed to get upload URLs: ${await uploadResponse.text()}`);
   }
 
-  const uploads: Array<{ fileId: string; uploadUrl: string }> =
+  const uploads: Array<{ key: string; uploadUrl: string }> =
     await uploadResponse.json();
 
   // Step 2: Upload each file to its presigned URL
-  const fileIds: string[] = [];
+  const keys: string[] = [];
   for (let i = 0; i < filePaths.length; i++) {
     const filePath = filePaths[i];
-    const { fileId, uploadUrl } = uploads[i];
+    const { key, uploadUrl } = uploads[i];
 
-    console.log(`Uploading ${filePath} -> ${fileId}...`);
+    console.log(`Uploading ${filePath} -> ${key}...`);
 
     const fileContent = readFileSync(filePath);
     const uploadResult = await fetch(uploadUrl, {
       method: "PUT",
       body: fileContent,
-      headers: {
-        "Content-Type": "video/mp4",
-      },
     });
 
     if (!uploadResult.ok) {
@@ -56,26 +54,26 @@ async function uploadFiles(filePaths: string[]) {
       );
     }
 
-    fileIds.push(fileId);
+    keys.push(key);
     console.log(`✓ Uploaded ${filePath}`);
   }
 
-  console.log("\nFile IDs:");
-  fileIds.forEach((id, i) => {
-    console.log(`  ${filePaths[i]}: ${id}`);
+  console.log("\nKeys:");
+  keys.forEach((key, i) => {
+    console.log(`  ${filePaths[i]}: ${key}`);
   });
 
-  return fileIds;
+  return keys;
 }
 
-async function processFiles(fileIds: string[]) {
-  console.log(`Processing ${fileIds.length} files...`);
+async function processFiles(keys: string[]) {
+  console.log(`Processing ${keys.length} files...`);
 
   // Start the processing job
   const processResponse = await fetch(`${API_URL}/process`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileIds }),
+    body: JSON.stringify({ keys }),
   });
 
   if (!processResponse.ok) {
@@ -124,12 +122,12 @@ try {
     }
     await uploadFiles(filePaths);
   } else if (command === "process") {
-    const fileIds = args.slice(1);
-    if (fileIds.length === 0) {
-      console.error("Error: No file IDs specified");
+    const keys = args.slice(1);
+    if (keys.length === 0) {
+      console.error("Error: No keys specified");
       process.exit(1);
     }
-    await processFiles(fileIds);
+    await processFiles(keys);
   } else {
     console.error(`Unknown command: ${command}`);
     process.exit(1);

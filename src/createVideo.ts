@@ -6,24 +6,25 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client();
 
-export async function createVideo(fileIds: string[]): Promise<Buffer> {
-  console.log("Starting video creation for files:", fileIds);
+export async function createVideo(keys: string[]): Promise<Buffer> {
+  console.log("Starting video creation for keys:", keys);
 
   // Download all videos from S3
   const videoFiles: string[] = [];
-  for (const fileId of fileIds) {
-    const downloadPath = path.join("/tmp", `${fileId}.mp4`);
+  for (const key of keys) {
+    const filename = key.split("/").pop()!;
+    const downloadPath = path.join("/tmp", filename);
     const response = await s3.send(
       new GetObjectCommand({
         Bucket: process.env.BUCKET_NAME!,
-        Key: `uploads/${fileId}.mp4`,
+        Key: key,
       })
     );
 
     const buffer = await response.Body!.transformToByteArray();
     await fs.writeFile(downloadPath, buffer);
     videoFiles.push(downloadPath);
-    console.log("Downloaded:", fileId);
+    console.log("Downloaded:", key);
   }
 
   // Concatenate videos using ffmpeg concat filter
