@@ -24,7 +24,7 @@ export default $config({
     const workerFunction = new sst.aws.Function("WorkerFunction", {
       memory: "2 GB",
       timeout: "15 minutes",
-      handler: "worker.handler",
+      handler: "src/worker.handler",
       link: [bucket, processingJobsTable],
       environment: {
         BUCKET_NAME: bucket.name,
@@ -35,7 +35,7 @@ export default $config({
 
     const func = new sst.aws.Function("MyFunction", {
       url: true,
-      handler: "index.handler",
+      handler: "src/index.handler",
       link: [bucket, processingJobsTable, workerFunction],
       environment: {
         BUCKET_NAME: bucket.name,
