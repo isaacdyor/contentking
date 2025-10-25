@@ -5,14 +5,22 @@
 
 declare module "sst" {
   export interface Resource {
+    "ApiFunction": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
     "MyBucket": {
       "name": string
       "type": "sst.aws.Bucket"
     }
-    "MyFunction": {
+    "ProcessingJobs": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "WorkerFunction": {
       "name": string
       "type": "sst.aws.Function"
-      "url": string
     }
   }
 }

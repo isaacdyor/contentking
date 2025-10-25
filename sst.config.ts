@@ -12,21 +12,31 @@ export default $config({
   async run() {
     const bucket = new sst.aws.Bucket("MyBucket");
 
-    const func = new sst.aws.Function("MyFunction", {
-      url: true,
+    const processingJobsTable = new sst.aws.Dynamo("ProcessingJobs", {
+      fields: {
+        jobId: "string",
+      },
+      primaryIndex: {
+        hashKey: "jobId",
+      },
+    });
+
+    const workerFunction = new sst.aws.Function("WorkerFunction", {
+      handler: "worker.handler",
       memory: "2 GB",
       timeout: "15 minutes",
-      handler: "index.handler",
-      link: [bucket],
-      environment: {
-        BUCKET_NAME: bucket.name,
-      },
-      copyFiles: [{ from: "clip.mp4" }],
+      link: [bucket, processingJobsTable],
       nodejs: { install: ["ffmpeg-static"] },
     });
 
+    const apiFunction = new sst.aws.Function("ApiFunction", {
+      url: true,
+      handler: "index.handler",
+      link: [bucket, processingJobsTable, workerFunction],
+    });
+
     return {
-      url: func.url,
+      url: apiFunction.url,
     };
   },
 });
