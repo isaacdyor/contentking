@@ -5,6 +5,10 @@
 
 declare module "sst" {
   export interface Resource {
+    "DeepgramAccessToken": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "MyBucket": {
       "name": string
       "type": "sst.aws.Bucket"

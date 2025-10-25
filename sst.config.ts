@@ -10,6 +10,8 @@ export default $config({
     };
   },
   async run() {
+    const deepgramAccessToken = new sst.Secret("DeepgramAccessToken");
+
     const bucket = new sst.aws.Bucket("MyBucket");
 
     const processingJobsTable = new sst.aws.Dynamo("ProcessingJobs", {
@@ -25,7 +27,7 @@ export default $config({
       memory: "2 GB",
       timeout: "15 minutes",
       handler: "src/worker.handler",
-      link: [bucket, processingJobsTable],
+      link: [bucket, processingJobsTable, deepgramAccessToken],
       environment: {
         BUCKET_NAME: bucket.name,
         TABLE_NAME: processingJobsTable.name,
