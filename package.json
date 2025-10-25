@@ -1,0 +1,20 @@
+{
+  "name": "contentking",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --watch index.ts"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.156",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "sst": "3.17.21"
+  }
+}
