@@ -10,7 +10,8 @@ interface SubtitleSegment {
 }
 
 function transcriptToSubtitles(
-  transcript: SyncPrerecordedResponse
+  transcript: SyncPrerecordedResponse,
+  speedFactor: number
 ): SubtitleSegment[] {
   const segments: SubtitleSegment[] = [];
 
@@ -21,8 +22,8 @@ function transcriptToSubtitles(
     if (word.word && word.start !== undefined && word.end !== undefined) {
       segments.push({
         text: word.word,
-        start: word.start,
-        end: word.end,
+        start: word.start / speedFactor, // Scale timestamps by speed factor
+        end: word.end / speedFactor,
       });
     }
   }
@@ -60,12 +61,16 @@ function formatSRTTime(seconds: number): string {
 
 export async function generateSubtitles(
   videoPath: string,
-  transcript: SyncPrerecordedResponse
+  transcript: SyncPrerecordedResponse,
+  speedFactor: number = 1.0
 ): Promise<string> {
   console.log("Generating subtitles from transcript...");
+  if (speedFactor !== 1.0) {
+    console.log(`Scaling subtitle timestamps by ${speedFactor.toFixed(2)}x speed factor`);
+  }
 
   // Convert transcript to subtitle segments
-  const segments = transcriptToSubtitles(transcript);
+  const segments = transcriptToSubtitles(transcript, speedFactor);
   console.log(`Generated ${segments.length} subtitle segments`);
 
   if (segments.length === 0) {

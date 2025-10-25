@@ -4,7 +4,7 @@ import { execSync } from "child_process";
 import type { SyncPrerecordedResponse } from "@deepgram/sdk";
 
 // Target words per minute for ideal pacing
-const IDEAL_WPM = 180;
+const IDEAL_WPM = 250;
 
 // Maximum speed multiplier (don't go beyond this even if super slow)
 const MAX_SPEED_MULTIPLIER = 2.0;
@@ -53,14 +53,18 @@ export async function speedUpVideo(
 
   // Never slow down (min = 1.0)
   if (speedFactor < 1.0) {
-    console.log(`Already faster than ideal (${IDEAL_WPM} WPM), no speed change`);
+    console.log(
+      `Already faster than ideal (${IDEAL_WPM} WPM), no speed change`
+    );
     return { videoPath, speedFactor: 1.0 };
   }
 
   // Cap at maximum speed
   if (speedFactor > MAX_SPEED_MULTIPLIER) {
     console.log(
-      `Speed factor ${speedFactor.toFixed(2)}x exceeds max, capping at ${MAX_SPEED_MULTIPLIER}x`
+      `Speed factor ${speedFactor.toFixed(
+        2
+      )}x exceeds max, capping at ${MAX_SPEED_MULTIPLIER}x`
     );
     speedFactor = MAX_SPEED_MULTIPLIER;
   }
@@ -86,8 +90,12 @@ export async function speedUpVideo(
     console.log(`✅ Video sped up successfully: ${outputPath}`);
     return { videoPath: outputPath, speedFactor };
   } catch (error: any) {
-    console.error(`FFmpeg speed adjustment failed with exit code ${error.status}`);
+    console.error(
+      `FFmpeg speed adjustment failed with exit code ${error.status}`
+    );
     console.error(error.stderr?.toString());
-    throw new Error(`FFmpeg speed adjustment failed: ${error.stderr?.toString()}`);
+    throw new Error(
+      `FFmpeg speed adjustment failed: ${error.stderr?.toString()}`
+    );
   }
 }
