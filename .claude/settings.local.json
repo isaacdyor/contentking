@@ -8,7 +8,8 @@
       "Bash(aws lambda list-functions:*)",
       "Bash(aws lambda update-function-configuration:*)",
       "Bash(aws logs tail:*)",
-      "Bash(sst:*)"
+      "Bash(sst:*)",
+      "Bash(bun add:*)"
     ],
     "deny": [],
     "ask": []

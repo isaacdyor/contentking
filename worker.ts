@@ -9,7 +9,6 @@ import {
 } from "@aws-sdk/client-s3";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { Resource } from "sst";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
@@ -30,7 +29,7 @@ export const handler = async (event: WorkerEvent) => {
 
       const response = await s3.send(
         new GetObjectCommand({
-          Bucket: Resource.MyBucket.name,
+          Bucket: process.env.BUCKET_NAME!,
           Key: fileId,
         })
       );
@@ -75,19 +74,19 @@ export const handler = async (event: WorkerEvent) => {
 
     await s3.send(
       new PutObjectCommand({
-        Bucket: Resource.MyBucket.name,
+        Bucket: process.env.BUCKET_NAME!,
         Key: resultKey,
         Body: resultBuffer,
         ContentType: "video/mp4",
       })
     );
 
-    const resultUrl = `https://${Resource.MyBucket.name}.s3.amazonaws.com/${resultKey}`;
+    const resultUrl = `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${resultKey}`;
 
     // Update DynamoDB job to completed
     await dynamoClient.send(
       new UpdateCommand({
-        TableName: Resource.ProcessingJobs.name,
+        TableName: process.env.TABLE_NAME!,
         Key: { jobId },
         UpdateExpression:
           "SET #status = :status, resultUrl = :resultUrl, updatedAt = :updatedAt",
@@ -114,7 +113,7 @@ export const handler = async (event: WorkerEvent) => {
     // Update DynamoDB job to failed
     await dynamoClient.send(
       new UpdateCommand({
-        TableName: Resource.ProcessingJobs.name,
+        TableName: process.env.TABLE_NAME!,
         Key: { jobId },
         UpdateExpression:
           "SET #status = :status, errorMessage = :errorMessage, updatedAt = :updatedAt",
