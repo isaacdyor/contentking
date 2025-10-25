@@ -22,15 +22,15 @@ export async function createVideo(videoFilePaths: string[]): Promise<Buffer> {
     inputArgs.push("-i", file);
   }
 
-  // Build filter complex: scale each video to same resolution and fps, then concat
-  const scaleFilters = editedPaths
+  // Build filter complex: scale each video to same resolution and fps, process audio, then concat
+  const filters = editedPaths
     .map(
       (_, i) =>
-        `[${i}:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v${i}]`
+        `[${i}:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v${i}];[${i}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[a${i}]`
     )
     .join(";");
-  const concatInputs = editedPaths.map((_, i) => `[v${i}]`).join("");
-  const filterComplex = `${scaleFilters};${concatInputs}concat=n=${editedPaths.length}:v=1:a=0[outv]`;
+  const concatInputs = editedPaths.map((_, i) => `[v${i}][a${i}]`).join("");
+  const filterComplex = `${filters};${concatInputs}concat=n=${editedPaths.length}:v=1:a=1[outv][outa]`;
 
   const ffmpegParams = [
     ...inputArgs,
@@ -38,15 +38,20 @@ export async function createVideo(videoFilePaths: string[]): Promise<Buffer> {
     filterComplex,
     "-map",
     "[outv]",
+    "-map",
+    "[outa]",
     "-c:v",
     "libx264",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "192k",
     "-preset",
     "fast",
     "-pix_fmt",
     "yuv420p", // Ensure compatible pixel format for all players
     "-movflags",
     "+faststart", // Enable streaming/progressive download
-    "-an", // No audio
     outputPath,
   ];
 
