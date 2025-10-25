@@ -9,7 +9,9 @@
       "Bash(aws lambda update-function-configuration:*)",
       "Bash(aws logs tail:*)",
       "Bash(sst:*)",
-      "Bash(bun add:*)"
+      "Bash(bun add:*)",
+      "Read(//tmp/**)",
+      "Bash(aws logs describe-log-groups:*)"
     ],
     "deny": [],
     "ask": []

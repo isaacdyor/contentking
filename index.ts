@@ -5,17 +5,10 @@ import { z } from "zod";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  DynamoDBDocumentClient,
-  PutCommand,
-  GetCommand,
-} from "@aws-sdk/lib-dynamodb";
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { DynamoDBDocumentClient, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
-const lambdaClient = new LambdaClient();
-
 const app = new Hono();
 
 // Schemas
@@ -46,10 +39,10 @@ app.post("/upload", zValidator("json", uploadSchema), async (c) => {
     })
   );
 
-  return c.json({ uploads });
+  return c.json(uploads);
 });
 
-// POST /process - Start video processing job
+// POST /process - Start video processing
 app.post("/process", zValidator("json", processSchema), async (c) => {
   const body = c.req.valid("json");
   const jobId = crypto.randomUUID();
@@ -67,16 +60,7 @@ app.post("/process", zValidator("json", processSchema), async (c) => {
     })
   );
 
-  // Invoke worker Lambda asynchronously
-  await lambdaClient.send(
-    new InvokeCommand({
-      FunctionName: process.env.WORKER_FUNCTION_NAME!,
-      InvocationType: "Event", // Async invocation
-      Payload: JSON.stringify({ jobId, fileIds: body.fileIds }),
-    })
-  );
-
-  return c.json({ jobId, status: "processing" });
+  return c.json({ jobId });
 });
 
 // GET /status/:jobId - Check job status

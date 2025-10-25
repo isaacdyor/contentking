@@ -21,29 +21,18 @@ export default $config({
       },
     });
 
-    const workerFunction = new sst.aws.Function("WorkerFunction", {
-      handler: "worker.handler",
-      memory: "2 GB",
-      timeout: "15 minutes",
-      environment: {
-        BUCKET_NAME: bucket.name,
-        TABLE_NAME: processingJobsTable.name,
-      },
-      nodejs: { install: ["ffmpeg-static"] },
-    });
-
-    const apiFunction = new sst.aws.Function("ApiFunction", {
+    const func = new sst.aws.Function("MyFunction", {
       url: true,
       handler: "index.handler",
+      link: [bucket, processingJobsTable],
       environment: {
         BUCKET_NAME: bucket.name,
         TABLE_NAME: processingJobsTable.name,
-        WORKER_FUNCTION_NAME: workerFunction.name,
       },
     });
 
     return {
-      url: apiFunction.url,
+      url: func.url,
     };
   },
 });
