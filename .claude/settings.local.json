@@ -11,7 +11,10 @@
       "Bash(sst:*)",
       "Bash(bun add:*)",
       "Read(//tmp/**)",
-      "Bash(aws logs describe-log-groups:*)"
+      "Bash(aws logs describe-log-groups:*)",
+      "Bash(aws s3 ls:*)",
+      "Bash(aws s3 cp:*)",
+      "Bash(aws s3api head-object:*)"
     ],
     "deny": [],
     "ask": []

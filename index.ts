@@ -5,10 +5,16 @@ import { z } from "zod";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  PutCommand,
+  GetCommand,
+} from "@aws-sdk/lib-dynamodb";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
+const lambdaClient = new LambdaClient();
 const app = new Hono();
 
 // Schemas
@@ -57,6 +63,15 @@ app.post("/process", zValidator("json", processSchema), async (c) => {
         fileIds: body.fileIds,
         createdAt: Date.now(),
       },
+    })
+  );
+
+  // Invoke worker Lambda asynchronously
+  await lambdaClient.send(
+    new InvokeCommand({
+      FunctionName: process.env.WORKER_FUNCTION_NAME!,
+      InvocationType: "Event", // Async invocation
+      Payload: JSON.stringify({ jobId, fileIds: body.fileIds }),
     })
   );
 
