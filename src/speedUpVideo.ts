@@ -1,7 +1,7 @@
-import path from "path";
 import ffmpeg from "ffmpeg-static";
 import { execSync } from "child_process";
 import type { SyncPrerecordedResponse } from "@deepgram/sdk";
+import { generateOutputPath } from "./utils/ffmpegHelpers";
 
 // Target words per minute for ideal pacing
 const IDEAL_WPM = 200;
@@ -72,11 +72,7 @@ export async function speedUpVideo(
   console.log(`Speeding up video by ${speedFactor.toFixed(2)}x`);
 
   // Generate output path
-  const parsedPath = path.parse(videoPath);
-  const outputPath = path.join(
-    parsedPath.dir,
-    `${parsedPath.name}_sped${parsedPath.ext}`
-  );
+  const outputPath = generateOutputPath(videoPath, "sped");
 
   // Speed up video and audio using setpts and atempo
   // Note: atempo filter only supports 0.5-2.0 range, so for >2x we'd need to chain

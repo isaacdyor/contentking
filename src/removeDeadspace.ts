@@ -1,17 +1,12 @@
-import path from "path";
 import ffmpeg from "ffmpeg-static";
 import { execSync } from "child_process";
+import { invertSegmentsToKeep, generateOutputPath, type Segment } from "./utils/ffmpegHelpers";
 
 // Audio-based silence removal settings - very aggressive for fast-paced editing
 const SILENCE_THRESHOLD_DB = -35; // dB level to consider as silence (lower = more strict)
 const SILENCE_DURATION = 0.05; // Minimum silence duration to remove (50ms)
 
-interface SilenceSegment {
-  start: number;
-  end: number;
-}
-
-function detectSilence(videoPath: string): SilenceSegment[] {
+function detectSilence(videoPath: string): Segment[] {
   // First pass: detect silence segments
   const detectCmd = `"${ffmpeg}" -i "${videoPath}" -af silencedetect=noise=${SILENCE_THRESHOLD_DB}dB:d=${SILENCE_DURATION} -f null - 2>&1`;
 
@@ -24,7 +19,7 @@ function detectSilence(videoPath: string): SilenceSegment[] {
     const output = execSync(detectCmd, { encoding: "utf8" });
 
     // Parse silence_start and silence_end from output
-    const silences: SilenceSegment[] = [];
+    const silences: Segment[] = [];
     const lines = output.split("\n");
 
     let currentStart: number | null = null;
@@ -51,24 +46,13 @@ function detectSilence(videoPath: string): SilenceSegment[] {
   }
 }
 
-function buildSelectFilter(silences: SilenceSegment[]): string {
+function buildSelectFilter(silences: Segment[]): string {
   if (silences.length === 0) {
     return "[0:v]copy[v];[0:a]acopy[a]";
   }
 
-  // Build time ranges to KEEP (inverse of silences)
-  const keepRanges: Array<{ start: number; end: number }> = [];
-  let currentTime = 0;
-
-  for (const silence of silences) {
-    if (silence.start > currentTime) {
-      keepRanges.push({ start: currentTime, end: silence.start });
-    }
-    currentTime = silence.end;
-  }
-
-  // Add final segment (we don't know total duration, so let it run to end)
-  keepRanges.push({ start: currentTime, end: 999999 });
+  // Invert to get segments to keep
+  const keepRanges = invertSegmentsToKeep(silences);
 
   // Build select expression
   const conditions = keepRanges
@@ -88,11 +72,7 @@ export async function removeDeadspace(videoPath: string): Promise<string> {
   }
 
   // Generate output path
-  const parsedPath = path.parse(videoPath);
-  const outputPath = path.join(
-    parsedPath.dir,
-    `${parsedPath.name}_edited${parsedPath.ext}`
-  );
+  const outputPath = generateOutputPath(videoPath, "edited");
 
   // Build filter to remove silence from both video and audio
   const filterComplex = buildSelectFilter(silences);
