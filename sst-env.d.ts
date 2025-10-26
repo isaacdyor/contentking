@@ -5,6 +5,10 @@
 
 declare module "sst" {
   export interface Resource {
+    "AnthropicApiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "DeepgramAccessToken": {
       "type": "sst.sst.Secret"
       "value": string

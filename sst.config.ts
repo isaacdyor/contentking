@@ -11,6 +11,7 @@ export default $config({
   },
   async run() {
     const deepgramAccessToken = new sst.Secret("DeepgramAccessToken");
+    const anthropicApiKey = new sst.Secret("AnthropicApiKey");
 
     const bucket = new sst.aws.Bucket("MyBucket");
 
@@ -27,7 +28,7 @@ export default $config({
       memory: "2 GB",
       timeout: "15 minutes",
       handler: "src/worker.handler",
-      link: [bucket, processingJobsTable, deepgramAccessToken],
+      link: [bucket, processingJobsTable, deepgramAccessToken, anthropicApiKey],
       environment: {
         BUCKET_NAME: bucket.name,
         TABLE_NAME: processingJobsTable.name,
@@ -39,7 +40,7 @@ export default $config({
     const func = new sst.aws.Function("MyFunction", {
       url: true,
       handler: "src/index.handler",
-      link: [bucket, processingJobsTable, workerFunction],
+      link: [bucket, processingJobsTable, workerFunction, anthropicApiKey],
       environment: {
         BUCKET_NAME: bucket.name,
         TABLE_NAME: processingJobsTable.name,

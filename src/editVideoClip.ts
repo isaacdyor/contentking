@@ -17,27 +17,27 @@ export async function editVideoClip(
     initialTranscript
   );
 
-  // Remove deadspace from video
-  const deadspaceRemovedPath = await removeDeadspace(fillerRemovedPath);
+  // // Remove deadspace from video
+  // const deadspaceRemovedPath = await removeDeadspace(fillerRemovedPath);
 
-  // Wait 2 seconds to ensure file is fully flushed
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  // // Wait 2 seconds to ensure file is fully flushed
+  // await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  // Get transcript for the cleaned video (after filler removal + deadspace removal)
-  const transcript = await getTranscript(deadspaceRemovedPath);
+  // // Get transcript for the cleaned video (after filler removal + deadspace removal)
+  // const transcript = await getTranscript(deadspaceRemovedPath);
 
-  // Speed up video if speaking too slowly
-  const { videoPath: spedUpPath, speedFactor } = await speedUpVideo(
-    deadspaceRemovedPath,
-    transcript
-  );
+  // // Speed up video if speaking too slowly
+  // const { videoPath: spedUpPath, speedFactor } = await speedUpVideo(
+  //   deadspaceRemovedPath,
+  //   transcript
+  // );
 
-  // Generate and burn in subtitles (with scaled timestamps)
-  const finalVideoPath = await generateSubtitles(
-    spedUpPath,
-    transcript,
-    speedFactor
-  );
+  // // Generate and burn in subtitles (with scaled timestamps)
+  // const finalVideoPath = await generateSubtitles(
+  //   spedUpPath,
+  //   transcript,
+  //   speedFactor
+  // );
 
-  return finalVideoPath;
+  return fillerRemovedPath;
 }

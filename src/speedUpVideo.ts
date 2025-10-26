@@ -4,10 +4,10 @@ import { execSync } from "child_process";
 import type { SyncPrerecordedResponse } from "@deepgram/sdk";
 
 // Target words per minute for ideal pacing
-const IDEAL_WPM = 250;
+const IDEAL_WPM = 200;
 
 // Maximum speed multiplier (don't go beyond this even if super slow)
-const MAX_SPEED_MULTIPLIER = 2.0;
+const MAX_SPEED_MULTIPLIER = 1.7;
 
 interface SpeedUpResult {
   videoPath: string;
