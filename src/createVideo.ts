@@ -18,7 +18,7 @@ export async function createVideo(
   );
 
   // Concatenate videos using ffmpeg concat filter
-  // Scale all videos to 1920x1080 and set to 30fps before concatenating
+  // Scale all videos to 1080x1920 (vertical format) and set to 30fps before concatenating
   const outputPath = path.join("/tmp", `output-${Date.now()}.mp4`);
 
   // Build input arguments: -i file1 -i file2 -i file3...
@@ -31,7 +31,7 @@ export async function createVideo(
   const filters = editedPaths
     .map(
       (_, i) =>
-        `[${i}:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v${i}];[${i}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[a${i}]`
+        `[${i}:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v${i}];[${i}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[a${i}]`
     )
     .join(";");
   const concatInputs = editedPaths.map((_, i) => `[v${i}][a${i}]`).join("");
