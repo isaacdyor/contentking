@@ -70,5 +70,55 @@ export async function createVideo(
   }
 
   console.log("Video created successfully at:", outputPath);
-  return outputPath;
+
+  // Add background music
+  const musicPath = path.join(
+    process.cwd(),
+    "music",
+    "TKANDZ - Now Or Never (Heavenly Audio) Instrumental W Sample 🔥.mp3"
+  );
+  const finalOutputPath = path.join("/tmp", `final-output-${Date.now()}.mp4`);
+
+  console.log("Adding background music from:", musicPath);
+  console.log("Music file exists:", await fs.access(musicPath).then(() => true).catch(() => false));
+
+  const musicParams = [
+    "-i",
+    outputPath, // video with original audio
+    "-stream_loop",
+    "-1", // loop music indefinitely
+    "-i",
+    musicPath, // background music
+    "-filter_complex",
+    "[1:a]volume=0.15[music];[0:a][music]amix=inputs=2:duration=shortest[aout]", // mix at 15% volume
+    "-map",
+    "0:v", // video from first input
+    "-map",
+    "[aout]", // mixed audio
+    "-c:v",
+    "copy", // don't re-encode video (faster)
+    "-c:a",
+    "aac",
+    "-b:a",
+    "192k",
+    "-shortest", // stop when video ends
+    finalOutputPath,
+  ];
+
+  console.log("Running ffmpeg to add background music...");
+  const musicResult = spawnSync(ffmpeg!, musicParams, { stdio: "pipe" });
+
+  if (musicResult.status !== 0) {
+    const stderr = musicResult.stderr?.toString() || "Unknown error";
+    console.error("FFmpeg music mixing failed with stderr:", stderr);
+    throw new Error(
+      `ffmpeg music mixing failed with exit code ${musicResult.status}`
+    );
+  }
+
+  // Clean up intermediate file
+  await fs.unlink(outputPath);
+
+  console.log("Video with background music created at:", finalOutputPath);
+  return finalOutputPath;
 }

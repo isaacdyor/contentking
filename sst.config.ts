@@ -34,7 +34,10 @@ export default $config({
         BUCKET_NAME: bucket.name,
         TABLE_NAME: processingJobsTable.name,
       },
-      copyFiles: [{ from: "fonts", to: "fonts" }],
+      copyFiles: [
+        { from: "fonts", to: "fonts" },
+        { from: "music", to: "music" },
+      ],
 
       nodejs: { install: ["ffmpeg-static"] },
       retries: 0,

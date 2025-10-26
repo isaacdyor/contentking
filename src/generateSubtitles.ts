@@ -144,8 +144,6 @@ export async function burnASS({
     `force_style=FontName=DejaVu Sans\\,Bold=0`,
   ].join(":");
 
-  console.log("[ffmpeg vf] ❤️❤️❤️❤️❤️", vf);
-
   const args = [
     "-nostdin",
     "-y",
@@ -175,7 +173,6 @@ export async function burnASS({
   }
 
   const res = spawnSync(ffmpeg!, args, {
-    cwd: "/tmp",
     stdio: "pipe",
     encoding: "utf-8",
     env: process.env,
@@ -218,30 +215,6 @@ export async function generateSubtitles(
   }
 
   await burnASS({ inputPath: videoPath, assPath, outputPath });
-
-  const files = fs
-    .readdirSync("/tmp")
-    .filter((f) => f.startsWith("ffmpeg-") || f.startsWith("ffreport"));
-  if (!files.length) {
-    console.log("[fflog] no ffmpeg logs in /tmp");
-    return outputPath;
-  }
-  for (const f of files) {
-    const p = path.join("/tmp", f);
-    const txt = fs.readFileSync(p, "utf-8");
-    const want = txt
-      .split("\n")
-      .filter((line) =>
-        /subtitles|ass filter|fontconfig|Selected font|Using font provider|successfully opened|could not|font not found/i.test(
-          line
-        )
-      );
-    console.log(
-      `---- ${f} (filtered) ----\n${want
-        .slice(0, 200)
-        .join("\n")}\n-------------------------`
-    );
-  }
 
   return outputPath;
 }
