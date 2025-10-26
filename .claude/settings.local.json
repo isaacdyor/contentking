@@ -15,7 +15,12 @@
       "Bash(aws s3 ls:*)",
       "Bash(aws s3 cp:*)",
       "Bash(aws s3api head-object:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(aws lambda get-function-configuration:*)",
+      "Bash(aws lambda get-function:*)",
+      "Bash(aws s3api get-bucket-location:*)",
+      "Bash(aws logs describe-log-streams --log-group-name /aws/lambda/contentking-dev-WorkerFunctionFunction-thvxvrtc --order-by LastEventTime --descending --max-items 1 --query 'logStreams[0].logStreamName' --output text)",
+      "Bash(aws logs:*)"
     ],
     "deny": [],
     "ask": []

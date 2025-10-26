@@ -3,10 +3,9 @@
 import { parseArgs } from "util";
 import { readFileSync } from "fs";
 
-// const API_URL =
-//   "https://gi6llt2c43bge2p5evvt2hssbu0gdyfo.lambda-url.us-east-1.on.aws";
 const API_URL =
-  "https://pnbou6zyl3a5lauqzd2v3266em0lzzyz.lambda-url.us-east-1.on.aws";
+  "https://gi6llt2c43bge2p5evvt2hssbu0gdyfo.lambda-url.us-east-1.on.aws";
+// const API_URL = "https://pnbou6zyl3a5lauqzd2v3266em0lzzyz.lambda-url.us-east-1.on.aws";
 
 const args = process.argv.slice(2);
 
