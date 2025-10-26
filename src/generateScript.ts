@@ -3,9 +3,9 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { Resource } from "sst";
 import { exa } from "./exaClient";
 import z from "zod";
-import { SCRIPT_SYSTEM_PROMPT } from "./scriptSystemPrompt";
+import { getScriptSystemPrompt } from "./scriptSystemPrompt";
 
-export async function generateScript(linkedinUrl: string): Promise<string> {
+export async function generateScript(linkedinUrl: string, hotTake: string): Promise<string> {
   const result = await exa.getContents([linkedinUrl], {
     text: true,
   });
@@ -16,14 +16,12 @@ export async function generateScript(linkedinUrl: string): Promise<string> {
     apiKey: Resource.AnthropicApiKey.value,
   });
 
-  const systemPrompt = `LINKEDIN EXA: ${linkedinContent}
-
-${SCRIPT_SYSTEM_PROMPT}`;
+  const systemPrompt = getScriptSystemPrompt(linkedinContent, hotTake);
 
   const { object } = await generateObject({
     model: anthropic("claude-sonnet-4-5-20250929"),
     system: systemPrompt,
-    prompt: "Generate the script based on the LinkedIn profile.",
+    prompt: "Generate the script based on the LinkedIn profile and hot take.",
     schema: z.object({
       script: z.string(),
     }),
