@@ -12,6 +12,7 @@ export async function getTranscript(
       {
         model: "nova-3",
         smart_format: true,
+        filler_words: true,
       }
     );
 

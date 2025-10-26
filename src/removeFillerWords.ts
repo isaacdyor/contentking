@@ -4,7 +4,16 @@ import { execSync } from "child_process";
 import type { SyncPrerecordedResponse } from "@deepgram/sdk";
 
 // Filler words to remove (for now just "wait" for testing)
-const FILLER_WORDS = ["wait"];
+const FILLER_WORDS = [
+  "uh",
+  "um",
+  "mhmm",
+  "mm-mm",
+  "uh-uh",
+  "uh-huh",
+  "nuh-uh",
+  "wait",
+];
 
 export interface RemovedSegment {
   start: number;
@@ -37,9 +46,6 @@ export async function removeFillerWords(
         start: word.start,
         end: word.end,
       });
-      console.log(
-        `  Found filler word "${word.word}" at ${word.start.toFixed(2)}s - ${word.end.toFixed(2)}s`
-      );
     }
   }
 
@@ -91,6 +97,8 @@ export async function removeFillerWords(
   } catch (error: any) {
     console.error(`FFmpeg failed with exit code ${error.status}`);
     console.error(error.stderr?.toString());
-    throw new Error(`FFmpeg filler removal failed: ${error.stderr?.toString()}`);
+    throw new Error(
+      `FFmpeg filler removal failed: ${error.stderr?.toString()}`
+    );
   }
 }

@@ -16,7 +16,9 @@ function detectSilence(videoPath: string): SilenceSegment[] {
   const detectCmd = `"${ffmpeg}" -i "${videoPath}" -af silencedetect=noise=${SILENCE_THRESHOLD_DB}dB:d=${SILENCE_DURATION} -f null - 2>&1`;
 
   console.log("Detecting silence segments...");
-  console.log(`Using threshold: ${SILENCE_THRESHOLD_DB}dB, duration: ${SILENCE_DURATION}s`);
+  console.log(
+    `Using threshold: ${SILENCE_THRESHOLD_DB}dB, duration: ${SILENCE_DURATION}s`
+  );
 
   try {
     const output = execSync(detectCmd, { encoding: "utf8" });
@@ -33,11 +35,9 @@ function detectSilence(videoPath: string): SilenceSegment[] {
 
       if (startMatch) {
         currentStart = parseFloat(startMatch[1]);
-        console.log(`  Silence starts at ${currentStart}s`);
       }
       if (endMatch && currentStart !== null) {
         const end = parseFloat(endMatch[1]);
-        console.log(`  Silence ends at ${end}s (duration: ${(end - currentStart).toFixed(3)}s)`);
         silences.push({ start: currentStart, end });
         currentStart = null;
       }

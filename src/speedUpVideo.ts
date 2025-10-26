@@ -25,7 +25,7 @@ function calculateWPM(transcript: SyncPrerecordedResponse): number {
   const firstWord = words[0];
   const lastWord = words[words.length - 1];
 
-  if (!firstWord.start || !lastWord.end) {
+  if (firstWord.start === undefined || lastWord.end === undefined) {
     return 0;
   }
 

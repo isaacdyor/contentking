@@ -4,12 +4,17 @@ import { promises as fs } from "fs";
 import { spawnSync } from "child_process";
 import { editVideoClip } from "./editVideoClip";
 
-export async function createVideo(videoFilePaths: string[]): Promise<Buffer> {
+export async function createVideo(
+  videoFilePaths: string[],
+  jobId: string
+): Promise<string> {
   console.log("Starting video creation for files:", videoFilePaths);
 
   // Edit all video clips in parallel
   const editedPaths = await Promise.all(
-    videoFilePaths.map((path) => editVideoClip(path))
+    videoFilePaths.map((path, index) =>
+      editVideoClip(path, `${jobId}-clip${index}`)
+    )
   );
 
   // Concatenate videos using ffmpeg concat filter
@@ -64,9 +69,6 @@ export async function createVideo(videoFilePaths: string[]): Promise<Buffer> {
     throw new Error(`ffmpeg failed with exit code ${result.status}`);
   }
 
-  // Read the output video
-  const video = await fs.readFile(outputPath);
-  console.log("Video created successfully, size:", video.length, "bytes");
-
-  return video;
+  console.log("Video created successfully at:", outputPath);
+  return outputPath;
 }

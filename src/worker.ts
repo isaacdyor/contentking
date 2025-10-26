@@ -1,17 +1,14 @@
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { createVideo } from "./createVideo";
+import { uploadVideoToS3 } from "./uploadToS3";
 import path from "path";
 import { promises as fs } from "fs";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
+
 
 interface WorkerEvent {
   jobId: string;
@@ -43,29 +40,10 @@ export async function handler(event: WorkerEvent) {
     }
 
     // Create the concatenated video
-    const video = await createVideo(videoFilePaths);
+    const videoPath = await createVideo(videoFilePaths, jobId);
 
-    // Upload concatenated video to S3
-    const resultKey = `results/${jobId}.mp4`;
-
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: process.env.BUCKET_NAME!,
-        Key: resultKey,
-        Body: video,
-        ContentType: "video/mp4",
-      })
-    );
-
-    // Generate presigned URL for the result
-    const resultUrl = await getSignedUrl(
-      s3,
-      new GetObjectCommand({
-        Bucket: process.env.BUCKET_NAME!,
-        Key: resultKey,
-      }),
-      { expiresIn: 3600 }
-    );
+    // Upload concatenated video to S3 and get presigned URL
+    const resultUrl = await uploadVideoToS3(videoPath, `results/${jobId}.mp4`);
 
     console.log("Uploaded result:", resultUrl);
 
