@@ -30,6 +30,7 @@ const processSchema = z.object({
 
 const scriptSchema = z.object({
   linkedinUrl: z.url(),
+  hotTake: z.string(),
 });
 
 // Helper to get content type from extension
@@ -121,7 +122,7 @@ app.get("/status/:jobId", async (c) => {
 app.post("/script", zValidator("json", scriptSchema), async (c) => {
   const body = c.req.valid("json");
 
-  const script = await generateScript(body.linkedinUrl);
+  const script = await generateScript(body.linkedinUrl, body.hotTake);
 
   return c.json(script);
 });
