@@ -11,6 +11,7 @@ import {
   GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { generateScript } from "./generateScript";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
@@ -26,17 +27,21 @@ const processSchema = z.object({
   keys: z.array(z.string()),
 });
 
+const scriptSchema = z.object({
+  linkedinUrl: z.url(),
+});
+
 // Helper to get content type from extension
 function getContentType(filename: string): string {
-  const ext = filename.toLowerCase().split('.').pop();
+  const ext = filename.toLowerCase().split(".").pop();
   const contentTypes: Record<string, string> = {
-    'mp4': 'video/mp4',
-    'mov': 'video/quicktime',
-    'avi': 'video/x-msvideo',
-    'mkv': 'video/x-matroska',
-    'webm': 'video/webm',
+    mp4: "video/mp4",
+    mov: "video/quicktime",
+    avi: "video/x-msvideo",
+    mkv: "video/x-matroska",
+    webm: "video/webm",
   };
-  return contentTypes[ext || ''] || 'video/mp4';
+  return contentTypes[ext || ""] || "video/mp4";
 }
 
 // POST /upload - Generate presigned URLs for multiple files
@@ -46,7 +51,7 @@ app.post("/upload", zValidator("json", uploadSchema), async (c) => {
   const uploads = await Promise.all(
     body.filenames.map(async (filename) => {
       const fileId = crypto.randomUUID();
-      const ext = filename.split('.').pop() || 'mp4';
+      const ext = filename.split(".").pop() || "mp4";
       const command = new PutObjectCommand({
         Key: `uploads/${fileId}.${ext}`,
         Bucket: process.env.BUCKET_NAME!,
@@ -109,6 +114,15 @@ app.get("/status/:jobId", async (c) => {
   }
 
   return c.json(result.Item);
+});
+
+// POST /script - Create a new script from LinkedIn URL
+app.post("/script", zValidator("json", scriptSchema), async (c) => {
+  const body = c.req.valid("json");
+
+  const script = await generateScript(body.linkedinUrl);
+
+  return c.json(script);
 });
 
 export const handler = handle(app);

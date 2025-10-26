@@ -13,6 +13,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "ExaApiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "MyBucket": {
       "name": string
       "type": "sst.aws.Bucket"
