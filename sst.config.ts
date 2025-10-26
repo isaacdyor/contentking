@@ -49,6 +49,7 @@ export default $config({
         workerFunction,
         anthropicApiKey,
         exaApiKey,
+        deepgramAccessToken,
       ],
       environment: {
         BUCKET_NAME: bucket.name,
