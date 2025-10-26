@@ -27,12 +27,12 @@ ${hotTake}
 
 ## OUTPUT
 
-Generate ONLY the full script as flowing paragraphs with new lines between.
+Generate ONLY the full script as flowing paragraphs with NEW LINES between.
 NO section labels or structure mentions.
 
 *Requirements:*
 
-•⁠  The total of words should be between 120 and 135 total
+•⁠  The total of words should be 100 total
 •⁠  Sounds like one authentic and natural thought when read aloud
 •⁠  Uses the person's context so specifically that no one else could say this script
 •⁠  Written in first person (I/my/me)
