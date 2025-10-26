@@ -12,7 +12,6 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { generateScript } from "./generateScript";
-import { simpleS2T } from "./simpleS2T";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
@@ -26,11 +25,6 @@ const uploadSchema = z.object({
 
 const processSchema = z.object({
   keys: z.array(z.string()),
-});
-
-const scriptSchema = z.object({
-  linkedinUrl: z.url(),
-  hotTake: z.string(),
 });
 
 // Helper to get content type from extension
@@ -118,16 +112,23 @@ app.get("/status/:jobId", async (c) => {
   return c.json(result.Item);
 });
 
-// POST /script - Create a new script from LinkedIn URL
-app.post("/script", zValidator("json", scriptSchema), async (c) => {
-  const body = c.req.valid("json");
+// POST /script - Create a new script from LinkedIn URL and audio hot take
+app.post("/script", async (c) => {
+  const body = await c.req.parseBody();
+  const linkedinUrl = body["linkedinUrl"];
+  const audioFile = body["audio"];
 
-  const script = await generateScript(body.linkedinUrl, body.hotTake);
+  if (!linkedinUrl || typeof linkedinUrl !== "string") {
+    return c.json({ error: "LinkedIn URL is required" }, 400);
+  }
 
-  return c.json(script);
+  if (!audioFile || typeof audioFile === "string") {
+    return c.json({ error: "Audio file is required" }, 400);
+  }
+
+  const script = await generateScript(linkedinUrl, audioFile);
+
+  return c.json({ script });
 });
-
-// POST /transcribe - Direct audio transcription
-app.post("/transcribe", simpleS2T);
 
 export const handler = handle(app);
