@@ -144,9 +144,10 @@ export async function generateSubtitles(
   console.log(`SRT content preview (first 500 chars):\n${srtContent.substring(0, 500)}`);
 
   // Burn subtitles into video using ffmpeg with subtitles filter
-  // Using drawtext-style rendering with white text, black outline/shadow for readability
+  // Explicitly provide fonts directory so ffmpeg can find fonts in Lambda
   const srtPathEscaped = srtPath.replace(/\\/g, "/").replace(/'/g, "'\\''");
-  const subtitlesFilter = `subtitles='${srtPathEscaped}':force_style='FontName=Sans,FontSize=24,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=1,Alignment=2,MarginV=50'`;
+  const fontDir = "/var/task/fonts"; // Where SST copies our fonts
+  const subtitlesFilter = `subtitles='${srtPathEscaped}':fontsdir='${fontDir}':force_style='FontName=Liberation Sans,FontSize=24,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=1,Alignment=2,MarginV=50'`;
   const ffmpegCmd = `"${ffmpeg}" -i "${videoPath}" -vf "${subtitlesFilter}" -c:a copy -y "${outputPath}"`;
 
   console.log("Burning subtitles into video...");
