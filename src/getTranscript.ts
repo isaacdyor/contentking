@@ -6,6 +6,7 @@ export async function getTranscript(
   videoPath: string
 ): Promise<SyncPrerecordedResponse> {
   const deepgramClient = getDeepgramClient();
+  await new Promise((resolve) => setTimeout(resolve, 2000));
   const { result, error } =
     await deepgramClient.listen.prerecorded.transcribeFile(
       createReadStream(videoPath),
