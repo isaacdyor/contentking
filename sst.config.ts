@@ -33,6 +33,7 @@ export default $config({
         TABLE_NAME: processingJobsTable.name,
       },
       nodejs: { install: ["ffmpeg-static"] },
+      retries: 0,
     });
 
     const func = new sst.aws.Function("MyFunction", {
@@ -44,6 +45,7 @@ export default $config({
         TABLE_NAME: processingJobsTable.name,
         WORKER_FUNCTION_NAME: workerFunction.name,
       },
+      retries: 0,
     });
 
     return {
