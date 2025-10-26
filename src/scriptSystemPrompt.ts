@@ -14,26 +14,7 @@ HOT TAKE: ${hotTake}
 
 ## OUTPUT
 
-\`\`\`json
-{
-  "hooks": [
-    "Hook option 1",
-    "Hook option 2",
-    "Hook option 3",
-    "Hook option 4",
-    "Hook option 5"
-  ],
-  "script": {
-    "hook": "...",
-    "the_hot_take": "...",
-    "expected_pushback": "...",
-    "proof_authority": "...",
-    "your_defense": "...",
-    "flip_reframe": "...",
-    "cta": "..."
-  }
-}
-\`\`\`
+choose the best hook and generate the full script.
 
 ## SCRIPT STRUCTURE (45 SECONDS TOTAL)
 
