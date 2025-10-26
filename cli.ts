@@ -3,20 +3,35 @@
 import { parseArgs } from "util";
 import { readFileSync } from "fs";
 
-const API_URL =
+const PROD_API_URL =
   "https://gi6llt2c43bge2p5evvt2hssbu0gdyfo.lambda-url.us-east-1.on.aws";
-// const API_URL = "https://pnbou6zyl3a5lauqzd2v3266em0lzzyz.lambda-url.us-east-1.on.aws";
+const DEV_API_URL =
+  "https://pnbou6zyl3a5lauqzd2v3266em0lzzyz.lambda-url.us-east-1.on.aws";
 
-const args = process.argv.slice(2);
+const { values, positionals } = parseArgs({
+  args: process.argv.slice(2),
+  options: {
+    prod: {
+      type: "boolean",
+      default: false,
+    },
+  },
+  allowPositionals: true,
+});
 
-if (args.length === 0) {
+const API_URL = values.prod ? PROD_API_URL : DEV_API_URL;
+
+if (positionals.length === 0) {
   console.log("Usage:");
-  console.log("  bun cli.ts upload <file1.mp4> <file2.mp4> ...");
-  console.log("  bun cli.ts process <key1> <key2> ...");
+  console.log("  bun cli.ts [--prod] upload <file1.mp4> <file2.mp4> ...");
+  console.log("  bun cli.ts [--prod] process <key1> <key2> ...");
+  console.log("\nOptions:");
+  console.log("  --prod    Use production environment (default: dev)");
   process.exit(0);
 }
 
-const command = args[0];
+const command = positionals[0];
+const args = positionals;
 
 async function uploadFiles(filePaths: string[]) {
   console.log(`Uploading ${filePaths.length} files...`);

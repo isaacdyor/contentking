@@ -34,6 +34,8 @@ export default $config({
         BUCKET_NAME: bucket.name,
         TABLE_NAME: processingJobsTable.name,
       },
+      copyFiles: [{ from: "fonts", to: "fonts" }],
+
       nodejs: { install: ["ffmpeg-static"] },
       retries: 0,
     });
@@ -41,7 +43,13 @@ export default $config({
     const func = new sst.aws.Function("MyFunction", {
       url: true,
       handler: "src/index.handler",
-      link: [bucket, processingJobsTable, workerFunction, anthropicApiKey, exaApiKey],
+      link: [
+        bucket,
+        processingJobsTable,
+        workerFunction,
+        anthropicApiKey,
+        exaApiKey,
+      ],
       environment: {
         BUCKET_NAME: bucket.name,
         TABLE_NAME: processingJobsTable.name,
