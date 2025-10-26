@@ -12,6 +12,7 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { generateScript } from "./generateScript";
+import { simpleS2T } from "./simpleS2T";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
@@ -124,5 +125,8 @@ app.post("/script", zValidator("json", scriptSchema), async (c) => {
 
   return c.json(script);
 });
+
+// POST /transcribe - Direct audio transcription
+app.post("/transcribe", simpleS2T);
 
 export const handler = handle(app);
