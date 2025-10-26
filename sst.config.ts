@@ -26,7 +26,7 @@ export default $config({
     });
 
     const workerFunction = new sst.aws.Function("WorkerFunction", {
-      memory: "10 GB",
+      memory: "3008 MB",
       storage: "10 GB",
       timeout: "15 minutes",
       handler: "src/worker.handler",
