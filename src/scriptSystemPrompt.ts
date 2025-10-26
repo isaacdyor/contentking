@@ -14,7 +14,7 @@ HOT TAKE: ${hotTake}
 
 ## OUTPUT
 
-choose the best hook and generate the full script.
+choose the best hook and generate the full script. Maximum 135 words.
 
 ## SCRIPT STRUCTURE (45 SECONDS TOTAL)
 
