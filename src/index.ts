@@ -12,6 +12,7 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { generateScript } from "./generateScript";
+import { simpleS2T } from "./simpleS2T";
 
 const s3 = new S3Client();
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
@@ -29,6 +30,7 @@ const processSchema = z.object({
 
 const scriptSchema = z.object({
   linkedinUrl: z.url(),
+  hotTake: z.string(),
 });
 
 // Helper to get content type from extension
@@ -120,9 +122,12 @@ app.get("/status/:jobId", async (c) => {
 app.post("/script", zValidator("json", scriptSchema), async (c) => {
   const body = c.req.valid("json");
 
-  const script = await generateScript(body.linkedinUrl);
+  const script = await generateScript(body.linkedinUrl, body.hotTake);
 
   return c.json(script);
 });
+
+// POST /transcribe - Direct audio transcription
+app.post("/transcribe", simpleS2T);
 
 export const handler = handle(app);
