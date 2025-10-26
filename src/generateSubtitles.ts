@@ -159,7 +159,6 @@ export async function burnASS({
     "+faststart", // friendly for streaming
     "-loglevel",
     "debug",
-    "-report",
     outputPath,
   ];
 
