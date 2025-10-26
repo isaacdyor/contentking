@@ -113,22 +113,26 @@ app.get("/status/:jobId", async (c) => {
 });
 
 // POST /script - Create a new script from LinkedIn URL and audio hot take
-app.post("/script", async (c) => {
-  const body = await c.req.parseBody();
-  const linkedinUrl = body["linkedinUrl"];
-  const audioFile = body["audio"];
+app.post(
+  "/script",
+  zValidator(
+    "json",
+    z.object({
+      linkedinUrl: z.string(),
+      fileId: z.string(),
+    })
+  ),
+  async (c) => {
+    const body = c.req.valid("json");
+    const { linkedinUrl, fileId } = body;
 
-  if (!linkedinUrl || typeof linkedinUrl !== "string") {
-    return c.json({ error: "LinkedIn URL is required" }, 400);
+    console.log("❤️❤️❤️❤️❤️❤️❤️❤️LinkedIn URL:", linkedinUrl);
+    console.log("❤️❤️❤️❤️❤️❤️❤️❤️File ID:", fileId);
+
+    const script = await generateScript(linkedinUrl, fileId);
+
+    return c.json({ script });
   }
-
-  if (!audioFile || typeof audioFile === "string") {
-    return c.json({ error: "Audio file is required" }, 400);
-  }
-
-  const script = await generateScript(linkedinUrl, audioFile);
-
-  return c.json({ script });
-});
+);
 
 export const handler = handle(app);

@@ -7,12 +7,25 @@ import { getScriptSystemPrompt } from "./scriptSystemPrompt";
 import { getDeepgramClient } from "./deepgramClient";
 import { writeFile, unlink } from "fs/promises";
 import { createReadStream } from "fs";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import path from "path";
 
-export async function generateScript(linkedinUrl: string, audioFile: File): Promise<string> {
-  // First, transcribe the audio file to get the hot take text
-  const tempPath = `/tmp/${crypto.randomUUID()}.${audioFile.name.split(".").pop() || "m4a"}`;
-  const arrayBuffer = await audioFile.arrayBuffer();
-  await writeFile(tempPath, Buffer.from(arrayBuffer));
+const s3 = new S3Client();
+
+export async function generateScript(linkedinUrl: string, fileId: string): Promise<string> {
+  // Download the audio file from S3 to /tmp
+  const filename = fileId.split("/").pop()!;
+  const tempPath = path.join("/tmp", filename);
+
+  const response = await s3.send(
+    new GetObjectCommand({
+      Bucket: process.env.BUCKET_NAME!,
+      Key: fileId,
+    })
+  );
+
+  const buffer = await response.Body!.transformToByteArray();
+  await writeFile(tempPath, buffer);
 
   let hotTake: string;
   try {
