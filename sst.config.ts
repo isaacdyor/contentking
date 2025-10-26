@@ -41,7 +41,7 @@ export default $config({
     const func = new sst.aws.Function("MyFunction", {
       url: true,
       handler: "src/index.handler",
-      link: [bucket, processingJobsTable, workerFunction, anthropicApiKey, exaApiKey],
+      link: [bucket, processingJobsTable, workerFunction, anthropicApiKey, exaApiKey, deepgramAccessToken],
       environment: {
         BUCKET_NAME: bucket.name,
         TABLE_NAME: processingJobsTable.name,
