@@ -78,42 +78,29 @@ function transcriptToSubtitles(
   return chunks;
 }
 
-function generateASSContent(chunks: SubtitleChunk[]): string {
-  // ASS header with CapCut-style formatting
-  // Using DejaVu Sans which is available in Lambda, or falling back to default font
-  let assContent = `[Script Info]
-Title: Subtitles
-ScriptType: v4.00+
-WrapStyle: 0
-PlayResX: 1920
-PlayResY: 1080
+function generateSRTContent(chunks: SubtitleChunk[]): string {
+  let srtContent = "";
 
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Sans,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,4,0,2,10,10,400,1
+  chunks.forEach((chunk, index) => {
+    const startTime = formatSRTTime(chunk.start);
+    const endTime = formatSRTTime(chunk.end);
+    const text = chunk.text.toUpperCase(); // CapCut-style uppercase
 
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-`;
+    srtContent += `${index + 1}\n`;
+    srtContent += `${startTime} --> ${endTime}\n`;
+    srtContent += `${text}\n\n`;
+  });
 
-  for (const chunk of chunks) {
-    const startTime = formatASSTime(chunk.start);
-    const endTime = formatASSTime(chunk.end);
-    const text = chunk.text.toLowerCase(); // CapCut uses lowercase
-
-    assContent += `Dialogue: 0,${startTime},${endTime},Default,,0,0,0,,${text}\n`;
-  }
-
-  return assContent;
+  return srtContent;
 }
 
-function formatASSTime(seconds: number): string {
+function formatSRTTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  const centiseconds = Math.floor((seconds % 1) * 100);
+  const milliseconds = Math.floor((seconds % 1) * 1000);
 
-  return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")},${milliseconds.toString().padStart(3, "0")}`;
 }
 
 export async function generateSubtitles(
@@ -135,35 +122,36 @@ export async function generateSubtitles(
     return videoPath;
   }
 
-  // Generate ASS content
-  const assContent = generateASSContent(segments);
+  // Generate SRT content
+  const srtContent = generateSRTContent(segments);
 
-  // Write ASS file to temp location
+  // Write SRT file to temp location
   const parsedPath = path.parse(videoPath);
-  const assPath = path.join(parsedPath.dir, `${parsedPath.name}.ass`);
+  const srtPath = path.join(parsedPath.dir, `${parsedPath.name}.srt`);
   const outputPath = path.join(
     parsedPath.dir,
     `${parsedPath.name}_subtitled${parsedPath.ext}`
   );
 
-  // Write ASS file
-  const { writeFileSync, readFileSync, statSync } = await import("fs");
-  writeFileSync(assPath, assContent, "utf-8");
-  console.log(`ASS file written to: ${assPath}`);
+  // Write SRT file
+  const { writeFileSync, statSync } = await import("fs");
+  writeFileSync(srtPath, srtContent, "utf-8");
+  console.log(`SRT file written to: ${srtPath}`);
 
   // Verify file was written
-  const stats = statSync(assPath);
-  console.log(`ASS file size: ${stats.size} bytes`);
-  console.log(`ASS content preview (first 500 chars):\n${assContent.substring(0, 500)}`);
+  const stats = statSync(srtPath);
+  console.log(`SRT file size: ${stats.size} bytes`);
+  console.log(`SRT content preview (first 500 chars):\n${srtContent.substring(0, 500)}`);
 
-  // Burn subtitles into video using ffmpeg with ASS filter
-  // For Linux (Lambda), just use forward slashes, no colon escaping needed
-  const assPathEscaped = assPath.replace(/\\/g, "/");
-  const ffmpegCmd = `"${ffmpeg}" -i "${videoPath}" -vf "ass='${assPathEscaped}'" -c:a copy -y "${outputPath}"`;
+  // Burn subtitles into video using ffmpeg with subtitles filter
+  // Using drawtext-style rendering with white text, black outline/shadow for readability
+  const srtPathEscaped = srtPath.replace(/\\/g, "/").replace(/'/g, "'\\''");
+  const subtitlesFilter = `subtitles='${srtPathEscaped}':force_style='FontName=Sans,FontSize=24,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=1,Alignment=2,MarginV=50'`;
+  const ffmpegCmd = `"${ffmpeg}" -i "${videoPath}" -vf "${subtitlesFilter}" -c:a copy -y "${outputPath}"`;
 
   console.log("Burning subtitles into video...");
-  console.log(`ASS path: ${assPath}`);
-  console.log(`ASS path escaped: ${assPathEscaped}`);
+  console.log(`SRT path: ${srtPath}`);
+  console.log(`SRT path escaped: ${srtPathEscaped}`);
   console.log(`Video input: ${videoPath}`);
   console.log(`Video output: ${outputPath}`);
   console.log(`FFmpeg command: ${ffmpegCmd}`);
