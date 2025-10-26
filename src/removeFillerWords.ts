@@ -4,44 +4,45 @@ import { execSync } from "child_process";
 import type { SyncPrerecordedResponse } from "@deepgram/sdk";
 
 // Filler words to remove (for now just "wait" for testing)
-const FILLER_WORDS = [
-  "uh",
-  "um",
-  "mhmm",
-  "mm-mm",
-  "uh-uh",
-  "uh-huh",
-  "nuh-uh",
-  "wait",
-];
+const FILLER_WORDS = ["uh", "um", "mhmm", "mm-mm", "uh-uh", "uh-huh", "nuh-uh"];
 
 export interface RemovedSegment {
   start: number;
   end: number;
 }
 
-export interface FillerRemovalResult {
-  videoPath: string;
-  removedSegments: RemovedSegment[];
-}
-
 export async function removeFillerWords(
   videoPath: string,
   transcript: SyncPrerecordedResponse
-): Promise<FillerRemovalResult> {
+): Promise<string> {
   console.log("Removing filler words from video...");
 
   const words = transcript.results?.channels[0]?.alternatives[0]?.words || [];
   const removedSegments: RemovedSegment[] = [];
 
+  console.log(`\n📝 Total words in transcript: ${words.length}`);
+  console.log(`🎯 Filler words to check: ${FILLER_WORDS.join(", ")}\n`);
+
   // Find all filler words to remove
   for (const word of words) {
+    const wordLower = word.word?.toLowerCase();
+    const isFiller = FILLER_WORDS.includes(wordLower || "");
+
+    console.log(
+      `Word: "${word.word}" (lowercase: "${wordLower}") | ` +
+        `start: ${word.start} | end: ${word.end} | ` +
+        `isFiller: ${isFiller}`
+    );
+
     if (
       word.word &&
       word.start !== undefined &&
       word.end !== undefined &&
       FILLER_WORDS.includes(word.word.toLowerCase())
     ) {
+      console.log(
+        `  ✂️  REMOVING: "${word.word}" at ${word.start}-${word.end}`
+      );
       removedSegments.push({
         start: word.start,
         end: word.end,
@@ -49,33 +50,58 @@ export async function removeFillerWords(
     }
   }
 
+  console.log(`\n📊 Total filler words found: ${removedSegments.length}`);
+
   if (removedSegments.length === 0) {
     console.log("No filler words found, returning original video");
-    return { videoPath, removedSegments: [] };
+    return videoPath;
   }
 
   console.log(`Found ${removedSegments.length} filler words to remove`);
 
-  // Build time ranges to KEEP (inverse of removed segments)
-  const keepRanges: Array<{ start: number; end: number }> = [];
+  // Sort filler segments by start time
+  removedSegments.sort((a, b) => a.start - b.start);
+
+  console.log("\n🗑️  Filler word segments to remove:");
+  removedSegments.forEach((seg, i) => {
+    console.log(
+      `  ${i + 1}. ${seg.start}s - ${seg.end}s (duration: ${(
+        seg.end - seg.start
+      ).toFixed(2)}s)`
+    );
+  });
+
+  // Build segments to KEEP (non-filler segments)
+  const keptSegments: RemovedSegment[] = [];
   let currentTime = 0;
 
-  for (const segment of removedSegments) {
-    if (segment.start > currentTime) {
-      keepRanges.push({ start: currentTime, end: segment.start });
+  for (const fillerSegment of removedSegments) {
+    if (fillerSegment.start > currentTime) {
+      keptSegments.push({
+        start: currentTime,
+        end: fillerSegment.start
+      });
     }
-    currentTime = segment.end;
+    currentTime = fillerSegment.end;
   }
 
-  // Add final segment (from last removed segment to end of video)
-  keepRanges.push({ start: currentTime, end: 999999 });
+  // Add final segment from last filler to end of video
+  keptSegments.push({ start: currentTime, end: 999999 });
 
-  // Build select filter expression
-  const conditions = keepRanges
+  console.log("\n✅ Segments to KEEP (non-filler content):");
+  keptSegments.forEach((seg, i) => {
+    const duration = seg.end === 999999 ? 'end' : (seg.end - seg.start).toFixed(2) + 's';
+    console.log(`  ${i + 1}. ${seg.start}s - ${seg.end}s (duration: ${duration})`);
+  });
+
+  // Build select filter to keep non-filler segments
+  const conditions = keptSegments
     .map((range) => `between(t,${range.start},${range.end})`)
     .join("+");
 
   const filterComplex = `[0:v]select='${conditions}',setpts=N/FRAME_RATE/TB[v];[0:a]aselect='${conditions}',asetpts=N/SR/TB[a]`;
+
+  console.log(`\n🎬 FFmpeg filter: ${filterComplex}`);
 
   // Generate output path
   const parsedPath = path.parse(videoPath);
@@ -87,16 +113,19 @@ export async function removeFillerWords(
   // Run ffmpeg
   const ffmpegCmd = `"${ffmpeg}" -i "${videoPath}" -filter_complex "${filterComplex}" -map "[v]" -map "[a]" -y "${outputPath}"`;
 
-  console.log(`Removing ${removedSegments.length} filler word segments...`);
+  console.log(`\nRemoving ${removedSegments.length} filler word segments...`);
+  console.log(`Full FFmpeg command:\n${ffmpegCmd}`);
   console.log(`Output will be saved to: ${outputPath}`);
 
   try {
-    execSync(ffmpegCmd, { stdio: "pipe" });
+    const result = execSync(ffmpegCmd, { encoding: "utf8", stdio: "pipe" });
     console.log(`✅ Filler words removed successfully: ${outputPath}`);
-    return { videoPath: outputPath, removedSegments };
+    console.log(`FFmpeg output: ${result}`);
+    return outputPath;
   } catch (error: any) {
     console.error(`FFmpeg failed with exit code ${error.status}`);
-    console.error(error.stderr?.toString());
+    console.error(`FFmpeg stdout: ${error.stdout?.toString()}`);
+    console.error(`FFmpeg stderr: ${error.stderr?.toString()}`);
     throw new Error(
       `FFmpeg filler removal failed: ${error.stderr?.toString()}`
     );

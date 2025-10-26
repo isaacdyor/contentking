@@ -1,9 +1,8 @@
-import { getTranscript } from "./getTranscript";
-import { removeFillerWords } from "./removeFillerWords";
-import { removeDeadspace } from "./removeDeadspace";
-import { speedUpVideo } from "./speedUpVideo";
 import { generateSubtitles } from "./generateSubtitles";
-import { uploadVideoToS3 } from "./uploadToS3";
+import { getTranscript } from "./getTranscript";
+import { removeDeadspace } from "./removeDeadspace";
+import { removeFillerWords } from "./removeFillerWords";
+import { speedUpVideo } from "./speedUpVideo";
 
 export async function editVideoClip(
   videoPath: string,
@@ -12,12 +11,8 @@ export async function editVideoClip(
   // Get initial transcript for filler word detection
   const initialTranscript = await getTranscript(videoPath);
 
-  console.log(
-    `INITIAL TRANSCRIPT 🔥\n${JSON.stringify(initialTranscript, null, 2)}`
-  );
-
   // Remove filler words from video
-  const { videoPath: fillerRemovedPath } = await removeFillerWords(
+  const fillerRemovedPath = await removeFillerWords(
     videoPath,
     initialTranscript
   );
