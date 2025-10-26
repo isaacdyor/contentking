@@ -4,7 +4,7 @@ import type { SyncPrerecordedResponse } from "@deepgram/sdk";
 import { generateOutputPath } from "./utils/ffmpegHelpers";
 
 // Target words per minute for ideal pacing
-const IDEAL_WPM = 200;
+const IDEAL_WPM = 275;
 
 // Maximum speed multiplier (don't go beyond this even if super slow)
 const MAX_SPEED_MULTIPLIER = 1.7;
