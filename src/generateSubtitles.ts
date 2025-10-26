@@ -146,23 +146,35 @@ export async function generateSubtitles(
   );
 
   // Write ASS file
-  const { writeFileSync } = await import("fs");
+  const { writeFileSync, readFileSync, statSync } = await import("fs");
   writeFileSync(assPath, assContent, "utf-8");
   console.log(`ASS file written to: ${assPath}`);
+
+  // Verify file was written
+  const stats = statSync(assPath);
+  console.log(`ASS file size: ${stats.size} bytes`);
+  console.log(`ASS content preview (first 500 chars):\n${assContent.substring(0, 500)}`);
 
   // Burn subtitles into video using ffmpeg with ASS filter
   const assPathEscaped = assPath.replace(/\\/g, "/").replace(/:/g, "\\:");
   const ffmpegCmd = `"${ffmpeg}" -i "${videoPath}" -vf "ass=${assPathEscaped}" -c:a copy -y "${outputPath}"`;
 
   console.log("Burning subtitles into video...");
+  console.log(`ASS path: ${assPath}`);
+  console.log(`ASS path escaped: ${assPathEscaped}`);
+  console.log(`Video input: ${videoPath}`);
+  console.log(`Video output: ${outputPath}`);
+  console.log(`FFmpeg command: ${ffmpegCmd}`);
 
   try {
-    execSync(ffmpegCmd, { stdio: "pipe" });
+    const result = execSync(ffmpegCmd, { stdio: "pipe" });
+    console.log("FFmpeg stdout:", result.toString());
     console.log(`✅ Subtitles burned successfully: ${outputPath}`);
     return outputPath;
   } catch (error: any) {
     console.error(`FFmpeg failed with exit code ${error.status}`);
-    console.error(error.stderr?.toString());
+    console.error("FFmpeg stdout:", error.stdout?.toString());
+    console.error("FFmpeg stderr:", error.stderr?.toString());
     throw new Error(`FFmpeg subtitle burn failed: ${error.stderr?.toString()}`);
   }
 }
