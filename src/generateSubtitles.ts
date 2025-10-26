@@ -80,6 +80,7 @@ function transcriptToSubtitles(
 
 function generateASSContent(chunks: SubtitleChunk[]): string {
   // ASS header with CapCut-style formatting
+  // Using DejaVu Sans which is available in Lambda, or falling back to default font
   let assContent = `[Script Info]
 Title: Subtitles
 ScriptType: v4.00+
@@ -89,7 +90,7 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,4,0,2,10,10,400,1
+Style: Default,Sans,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,4,0,2,10,10,400,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -156,8 +157,9 @@ export async function generateSubtitles(
   console.log(`ASS content preview (first 500 chars):\n${assContent.substring(0, 500)}`);
 
   // Burn subtitles into video using ffmpeg with ASS filter
-  const assPathEscaped = assPath.replace(/\\/g, "/").replace(/:/g, "\\:");
-  const ffmpegCmd = `"${ffmpeg}" -i "${videoPath}" -vf "ass=${assPathEscaped}" -c:a copy -y "${outputPath}"`;
+  // For Linux (Lambda), just use forward slashes, no colon escaping needed
+  const assPathEscaped = assPath.replace(/\\/g, "/");
+  const ffmpegCmd = `"${ffmpeg}" -i "${videoPath}" -vf "ass='${assPathEscaped}'" -c:a copy -y "${outputPath}"`;
 
   console.log("Burning subtitles into video...");
   console.log(`ASS path: ${assPath}`);
